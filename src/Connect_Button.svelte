@@ -157,4 +157,9 @@ const accountFilter = (_account) => {
     max-width: 300px;
   }
 
+  button {
+    margin-bottom: 0 !important;
+    font-weight: bold;
+  }
+
 </style>

@@ -63,6 +63,10 @@ input:disabled {
 	font-size: 0.875rem;
 }
 
+.position-top-right {
+	margin-right: 1em !important;
+}
+
 .tooltip {
 	position: relative;
 	display: inline-block;
@@ -118,33 +122,20 @@ footer p {
 }
 
 .icon {
-	width: 1rem;
 	color: #333;
 }
 
-nav {
-    background-color: #cdcdcd82;
-    border-radius: 20px;
-    display: flex;
-    margin-bottom: 10px;
+.icon-2, .icon {
+	width: 24px;
+    display: inline-block;
 }
 
-nav a {
-	display: flex;
-    margin: 10px;
-	color: #333;
-}
-
-nav a[aria-current="page"] {
-    text-decoration: underline;
-}
-
-nav a:hover {
+/* The navigation menu links */
+.sidenav a {
+    font-weight: bold;
+	padding: 8px 8px 8px 32px;
 	text-decoration: none;
-}
-
-header {
-	display: flex;
-    flex-direction: column;
-    align-items: center;
+	font-size: 24px;
+	display: block;
+	transition: 0.3s;
 }
