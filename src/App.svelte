@@ -4,7 +4,11 @@
 	import Connect_Button from './Connect_Button.svelte';
 	import Modal from 'svelte-simple-modal';
 	import Toggle from './Toggle.svelte';
-	import { Connection, User } from './stores.js';
+	import { Connection, User, Stake, Token, Bridge } from './stores.js';
+	import abi_stake from './abi/Stake';
+	import abi_token from './abi/Token';
+	import abi_bridge from './abi/Bridge';
+	import Stack from './Stack.svelte';
 
 	import FaRegFolder from 'svelte-icons/fa/FaRegFolder.svelte'
 	import FaRegNewspaper from 'svelte-icons/fa/FaRegNewspaper.svelte'
@@ -17,11 +21,82 @@
 		if(!$Connection.web3)
 			return console.log('Can\'t refresh');
 
-		// let claimer = $Claimer;	
-		// claimer.contract = new $Connection.web3.eth.Contract(abi_claim, $Claimer.address);
-		// Claimer.set(claimer);
+		let stake = $Stake;	
+		stake.contract = new $Connection.web3.eth.Contract(abi_stake, $Stake.address);
+		Stake.set(stake);
 
+		let token = $Token;	
+		token.contract = new $Connection.web3.eth.Contract(abi_token, $Token.address);
+		Token.set(token);
 
+    
+		let connection = $Connection;
+		let user = $User;
+
+		try {
+    		connection.tx_OnGoing = true;
+    		
+    		connection.tx_Message = 'Consulting Tier';
+    		Connection.set(connection); 
+    		const st = await stake.contract.methods.getStake($Connection.account).call();
+			user.affiliation_date = st.timestamp;
+			user.staked = st.amount;
+			user.role = st.role;
+    		console.log('User staked: ', st);
+			const balance = await token.contract.methods.balanceOf($Connection.account).call();
+			console.log("Balance: ", balance);
+
+			if (st.role >= 0 && balance > 0) {
+			    user.role = 0;
+			} else {
+			    user.role = -1;
+			}
+    		
+    		User.set(user);    		
+    	} catch (error) {
+    		console.log("Can\'t refresh", error);
+    		setTimeout(() => window.refreshUserInfo() , 3000);
+    	} finally {
+    		connection.tx_OnGoing = false;
+    		connection.tx_Message = '';
+    		Connection.set(connection); 
+    	}
+    };
+
+    window.claim = async () => {
+        
+		let bridge = $Bridge;	
+		bridge.contract = new $Connection.web3.eth.Contract(abi_bridge, $Bridge.address);
+		Token.set(bridge);
+
+		connection.tx_OnGoing = true;
+		Connection.set(connection); 
+		console.log('Claiming');
+		
+		
+		await $Bridge.contract.methods.claim($Connection.account, tier_num, []).send({ from: $Connection.account })
+		.once('sent', () => {
+				connection.tx_Message = 'waiting for approval';
+				Connection.set(connection); 
+		})
+		.once('transactionHash',  (hash) => {
+				connection.tx_Message = 'transaction sent';
+				Connection.set(connection); 
+		})
+		.on('error', err => 
+			addNotification({
+			text: 'Joining to Tier error: ' + err.message,
+			position: "top-right",
+			type: "danger",
+			removeAfter: 8000,
+		}))
+		.then(() => {})
+		.catch(()=>{}) // this avoid a warning in console
+		.finally(function(receipt){
+			connection.tx_Message = '';
+			connection.tx_OnGoing = false;
+			Connection.set(connection); 
+		});
 	};
 
 	let navOpen = false;
@@ -36,6 +111,8 @@
 			navOpen = !navOpen;
 		}
 	}	
+
+	    
 </script>
 
 <svelte:window on:keydown={handleNavWithKey} />
@@ -91,43 +168,7 @@
 					<!-- <Wallet /> -->
 				</Route>
 				<Route path="/">
-					<div style="display: flex;justify-content: space-around;">
-						<div>
-							<h1><i>M&B</i> <b>Staking</b></h1>
-							<div class="staking">
-								<h3>staked MaB Tokens</h3>
-								<span class="data-r">02304.2</span>
-								<span class="data-l">MaB</span>
-								<hr>
-								<h3>To Stack/Withdraw</h3>
-								<span class="data-r">02304.2</span>
-								<span class="data-l">Mab</span>
-								<hr>
-								<button>STACK</button>
-								<button>WITHDRAW</button>
-							</div>
-						</div>
-						<div>
-							<h1><i>M&B</i> <b>Staking</b></h1>
-							<div class="staking">
-								<h3>Your Staking Group</h3>
-								<span class="data-g">093 Group | A.1</span>
-								<small class="details">See group Details</small>
-								<h3>Staking Reward</h3>
-								<div>
-									<div style="display: flex;">
-										<span class="data-r" style="width: 70%;text-align: justify;">&nbsp;321</span>
-										<span class="data-l">Mab</span>
-									</div>
-									<div style="display: flex;justify-content: space-between;padding: 0 0.5em;margin-bottom: 0.8em;">
-										<small class="details">23% Monthly</small>
-										<small class="details">Cycle N°2-23b</small>
-									</div>
-								</div>
-								<button>CLAIM</button>
-							</div>
-						</div>
-					</div>
+					<Stack />
 				</Route>
 				<Route path="files">
 					<h1><i>Files</i>.</h1>
@@ -203,68 +244,6 @@
 
 	:global(body.dark-mode) .icon {
 		color: white;
-	}
-
-	.staking {
-		border: 1px solid white;
-		border-radius: 10px;
-		background-color: #121427ff;
-		padding: 0 2.2em 2em;
-    	font-size: larger;
-		height: 309px;
-		/*-webkit-transform: perspective(300px) rotateX(25deg);*/
-	}
-
-	.staking h3 {
-		color: #1c9bf3ff;
-		font-weight: bold;
-	}
-
-	.staking .data-g{
-		color: white;
-		background-color: #011a3fff;
-		padding: 8px;
-		border-radius: 25px;
-		border: 1px solid white;
-	}
-
-	.staking .data-r{
-		color: white;
-		background-color: #011a3fff;
-		padding: 8px;
-		border-radius: 25px 0 0 25px;
-		border: 1px solid white;
-	}
-	
-	.staking .data-l{
-		color: white;
-		background-color: #1c9bf3ff;
-		margin-left: -5px;
-		padding: 8px;
-		border-radius: 0 25px 25px 0;
-		border: 1px solid white;
-		font-weight: bold;
-	}	
-	
-	.staking hr{
-		border: none;
-    	padding: 0.8em;
-	}
-
-	.details {
-		color: white;
-		font-size: small;
-		display: block;
-		margin-top: 1em;
-	}
-
-	.staking button{
-		background-color: #af8a2eff;
-		color: white;
-		padding: 10px;
-		font-weight: bold;
-		border-radius: 25px;
-		border: none;
 	}
 
 	/* Hamburger Menu icon */	
@@ -365,12 +344,6 @@
 	transition: all .5s;
 	padding: 20px;
 	}
-		
-	.pushMainToRight {
-		margin-left: 40%
-	/* 	transform: translate3d(40%, 0, 0); */
-		
-	}	
 		
 	.open {
 		width: 320px;

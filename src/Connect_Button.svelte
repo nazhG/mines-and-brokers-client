@@ -45,8 +45,8 @@ const handleChainChanged = (_chainId) => {
   connection.chainId = parseInt(_chainId); // hex to dec
 	Connection.set(connection); 
   console.log('chain Id: ', parseInt(_chainId));
-  if ($Connection.chainId && $Connection.chainId != 4) {
-    open(Modal, { message: 'Please, change the chain to Rinkeby',
+  if ($Connection.chainId && $Connection.chainId != 97) {
+    open(Modal, { message: 'Please, change the chain to bnb testnet',
       linkRef: 'https://docs.matic.network/docs/develop/metamask/testnet/',
       linkText: 'How add the chain to MetaMask?',
     });
@@ -120,13 +120,13 @@ const accountFilter = (_account) => {
 </script>
 
 <button
-	class="btn btn-connect tooltip { $Connection.logged ? ($Connection.chainId != 4 ? 'warnig' : 'success') : '' }"
+	class="btn btn-connect tooltip { $Connection.logged ? ($Connection.chainId != 97 ? 'warnig' : 'success') : '' }"
 	on:click={handleConnect}
 	disabled={$Connection.logged}>
   {#if $Connection.logged}
     { accountFilter($Connection.account) }
     <span class="tooltiptext">
-			{#if $Connection.chainId != 4}
+			{#if $Connection.chainId != 97}
         Wrong chain
 			{:else}
         Connected
