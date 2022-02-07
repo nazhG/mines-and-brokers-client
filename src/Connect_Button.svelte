@@ -45,7 +45,7 @@ const handleChainChanged = (_chainId) => {
   connection.chainId = parseInt(_chainId); // hex to dec
 	Connection.set(connection); 
   console.log('chain Id: ', parseInt(_chainId));
-  if ($Connection.chainId && $Connection.chainId != 97) {
+  if ($Connection.chainId && ($Connection.chainId != 97 || $Connection.chainId != 4)) {
     open(Modal, { message: 'Please, change the chain to bnb testnet',
       linkRef: 'https://docs.matic.network/docs/develop/metamask/testnet/',
       linkText: 'How add the chain to MetaMask?',
@@ -93,6 +93,8 @@ const handleAccountsChanged = async (_accounts) => {
       type: "success",
       removeAfter: 3000,
     });
+
+	  window.refreshUserInfo();
 
     handleChainChanged(await ethereum.request({ method: 'eth_chainId' }));
   }

@@ -4,12 +4,16 @@
 	import Connect_Button from './Connect_Button.svelte';
 	import Modal from 'svelte-simple-modal';
 	import Toggle from './Toggle.svelte';
-	import { Connection, User, Stake, Token, Bridge } from './stores.js';
+	import { Connection, User, Stake, Token, Bridge, BridgeIn, ETH_Token } from './stores.js';
 	import abi_stake from './abi/Stake';
 	import abi_token from './abi/Token';
+	import abi_eth_token from './abi/ETH_Token';
 	import abi_bridge from './abi/Bridge';
+	import abi_bridgeIn from './abi/BridgeIn';
 	import Stack from './Stack.svelte';
+	import Swap from './Swap.svelte';
 
+	import FaExchangeAlt from 'svelte-icons/fa/FaExchangeAlt.svelte'
 	import FaRegFolder from 'svelte-icons/fa/FaRegFolder.svelte'
 	import FaRegNewspaper from 'svelte-icons/fa/FaRegNewspaper.svelte'
 	import FaCompressArrowsAlt from 'svelte-icons/fa/FaCompressArrowsAlt.svelte'
@@ -33,34 +37,69 @@
 		let connection = $Connection;
 		let user = $User;
 
-		try {
-    		connection.tx_OnGoing = true;
-    		
-    		connection.tx_Message = 'Consulting Tier';
-    		Connection.set(connection); 
-    		const st = await stake.contract.methods.getStake($Connection.account).call();
-			user.affiliation_date = st.timestamp;
-			user.staked = st.amount;
-			user.role = st.role;
-    		console.log('User staked: ', st);
-			const balance = await token.contract.methods.balanceOf($Connection.account).call();
-			console.log("Balance: ", balance);
-
-			if (st.role >= 0 && balance > 0) {
-			    user.role = 0;
-			} else {
-			    user.role = -1;
+		if ($Connection.chainId == 4) {
+			
+			if (!$Connection.logged) {
+				addNotification({
+					text: 'Connect wallet to join',
+					position: "top-right",
+					type: "danger",
+					removeAfter: 2500,
+				})
+				// return false;
 			}
-    		
-    		User.set(user);    		
-    	} catch (error) {
-    		console.log("Can\'t refresh", error);
-    		setTimeout(() => window.refreshUserInfo() , 3000);
-    	} finally {
-    		connection.tx_OnGoing = false;
-    		connection.tx_Message = '';
-    		Connection.set(connection); 
-    	}
+
+			let success = false;
+			connection.tx_OnGoing = true;
+			Connection.set(connection); 
+
+			let token = new $Connection.web3.eth.Contract(abi_eth_token, $ETH_Token.address);
+			
+			const balance = Number(await token.methods.balanceOf(
+				$Connection.account
+			).call());
+
+			let bridgeIn = new $Connection.web3.eth.Contract(abi_bridgeIn, $BridgeIn.address);
+			
+			const burned = Number(await bridgeIn.methods.balance(
+				$Connection.account
+			).call());
+			console.log("burned",burned);
+			
+			user.burned = burned;
+			user.bhf = balance;
+			User.set(user);    		
+
+		} else {
+			try {
+				connection.tx_OnGoing = true;
+				
+				connection.tx_Message = 'Consulting balance';
+				Connection.set(connection); 
+				const st = await stake.contract.methods.getStake($Connection.account).call();
+				user.affiliation_date = st.time;
+				console.log('User staked: ', st);
+				const staked = await stake.contract.methods.balanceOf($Connection.account).call();
+				const role = await stake.contract.methods.getRole($Connection.account).call();
+				console.log("staked", staked);
+				console.log("role", role);
+				
+				const balance = await token.contract.methods.balanceOf($Connection.account).call();
+				console.log("Balance: ", balance);
+				user.bhm = balance;
+				user.staked = staked;
+				user.role = role;
+				
+				User.set(user);    		
+			} catch (error) {
+				console.log("Can\'t refresh", error);
+				setTimeout(() => window.refreshUserInfo() , 3000);
+			} finally {
+				connection.tx_OnGoing = false;
+				connection.tx_Message = '';
+				Connection.set(connection); 
+			}
+		}
     };
 
     window.claim = async () => {
@@ -111,7 +150,6 @@
 			navOpen = !navOpen;
 		}
 	}	
-
 	    
 </script>
 
@@ -130,18 +168,21 @@
 			<Link to="files">
 				<div class="icon"><FaRegFolder /></div><span class="sidenav-item">&nbsp;Documents</span> 
 			</Link>
-			<a href="https://medium.com/">
-				<div class="icon"><FaRegNewspaper /></div><span class="sidenav-item">&nbsp;Blog</span>
-			</a>
+			<Link to="swap">
+				<div class="icon"><FaExchangeAlt /></div><span class="sidenav-item">&nbsp;Swap</span> 
+			</Link>
+				<a href="https://medium.com/">
+					<div class="icon"><FaRegNewspaper /></div><span class="sidenav-item">&nbsp;Blog</span>
+				</a>
 			<Link to="/">
 				<div class="icon"><FaCompressArrowsAlt /></div><span class="sidenav-item">&nbsp;Cripto-funding</span>
 			</Link>
 			<Link to="videos">
 				<div class="icon"><FaTv /></div><span class="sidenav-item">&nbsp;Tutorials</span>
 			</Link>
-			<Link to="wallet">
+			<a href="https://snapshot.org/#/collectorsdefi.eth">
 				<div class="icon"><FaVoteYea /></div><span class="sidenav-item">&nbsp;Voting</span>
-			</Link>
+			</a>
 		</div>
 
 		<div class="top-bar">
@@ -169,6 +210,9 @@
 				</Route>
 				<Route path="/">
 					<Stack />
+				</Route>
+				<Route path="swap">
+					<Swap></Swap>
 				</Route>
 				<Route path="files">
 					<h1><i>Files</i>.</h1>
