@@ -78,7 +78,11 @@
 				Connection.set(connection); 
 				const st = await stake.contract.methods.getStake($Connection.account).call();
 				user.affiliation_date = st.time;
-				console.log('User staked: ', st);
+				
+				user.structure = st.roleStructure == 0 ? 0: new Date(Number(st.roleStructure)*1000);
+				user.treasure = st.roleTreasure == 0 ? 0: new Date(Number(st.roleTreasure)*1000);
+				console.log('User structure: ', user.structure);
+				console.log('User treasure: ', user.treasure);
 				const staked = await stake.contract.methods.balanceOf($Connection.account).call();
 				const role = await stake.contract.methods.getRole($Connection.account).call();
 				console.log("staked", staked);
@@ -153,7 +157,7 @@
 	    
 </script>
 
-<svelte:window on:keydown={handleNavWithKey} />
+<!-- <svelte:window on:keydown={handleNavWithKey} /> -->
 
 <div class="body">
 
@@ -163,26 +167,39 @@
 	<Notifications>
 
 		<div class="sidenav" class:open={navOpen}>
-			<a href="#a" class="closebtn" on:click={handleNav}>&times;</a>
-			
-			<Link to="files">
-				<div class="icon"><FaRegFolder /></div><span class="sidenav-item">&nbsp;Documents</span> 
-			</Link>
-			<Link to="swap">
-				<div class="icon"><FaExchangeAlt /></div><span class="sidenav-item">&nbsp;Swap</span> 
-			</Link>
+			<div class="menu-item">
+				<a href="#a" class="closebtn" on:click={handleNav}>&times;</a>
+			</div>
+			<div class="menu-item">
+				<Link to="files">
+					<div class="icon"><FaRegFolder /></div><span class="sidenav-item">&nbsp;Documents</span> 
+				</Link>
+			</div>
+			<div class="menu-item">
+				<Link to="swap">
+					<div class="icon"><FaExchangeAlt /></div><span class="sidenav-item">&nbsp;Swap</span> 
+				</Link>
+			</div>
+			<div class="menu-item">
 				<a href="https://medium.com/">
 					<div class="icon"><FaRegNewspaper /></div><span class="sidenav-item">&nbsp;Blog</span>
 				</a>
-			<Link to="/">
-				<div class="icon"><FaCompressArrowsAlt /></div><span class="sidenav-item">&nbsp;Cripto-funding</span>
-			</Link>
-			<Link to="videos">
-				<div class="icon"><FaTv /></div><span class="sidenav-item">&nbsp;Tutorials</span>
-			</Link>
-			<a href="https://snapshot.org/#/collectorsdefi.eth">
-				<div class="icon"><FaVoteYea /></div><span class="sidenav-item">&nbsp;Voting</span>
-			</a>
+			</div>
+			<div class="menu-item">
+				<Link to="/">
+					<div class="icon"><FaCompressArrowsAlt /></div><span class="sidenav-item">&nbsp;Cripto-funding</span>
+				</Link>
+			</div>
+			<div class="menu-item">
+				<Link to="videos">
+					<div class="icon"><FaTv /></div><span class="sidenav-item">&nbsp;Tutorials</span>
+				</Link>
+			</div>
+			<div class="menu-item">
+				<a href="https://snapshot.org/#/collectorsdefi.eth">
+					<div class="icon"><FaVoteYea /></div><span class="sidenav-item">&nbsp;Voting</span>
+				</a>
+			</div>
 		</div>
 
 		<div class="top-bar">
@@ -262,6 +279,10 @@
 		padding: 1em;
 		margin: 0 auto;
 		width: 80%;
+	}
+
+	.menu-item:hover {
+		background: #62626233;
 	}
 
 	.body {

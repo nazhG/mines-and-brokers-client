@@ -11,10 +11,52 @@ let Bhm = 100;
 
 const toWei = (num) => $Connection.web3.utils.toWei(num.toString());
 
+async function handleAddToken() {
+	const tokenAddress = '0x12eC09259A57A892F21169686ed4238A9F9Bf7A5';
+	const tokenSymbol = 'LP';
+	const tokenDecimals = 18;
+	const tokenImage = 'http://placekitten.com/200/300';
+
+	try {
+	// wasAdded is a boolean. Like any RPC method, an error may be thrown.
+	const wasAdded = await ethereum.request({
+		method: 'wallet_watchAsset',
+		params: {
+		type: 'ERC20', // Initially only supports ERC20, but eventually more!
+		options: {
+			address: tokenAddress, // The address that the token is at.
+			symbol: tokenSymbol, // A ticker symbol or shorthand, up to 5 chars.
+			decimals: tokenDecimals, // The number of decimals in the token
+			image: tokenImage, // A string url of the token logo
+		},
+		},
+	});
+
+	if (wasAdded) {
+		console.log('Thanks for your interest!');
+	} else {
+		console.log('Your loss!');
+	}
+	} catch (error) {
+	console.log(error);
+	}
+}
+
 async function handleStake() {
+
+	if (toStake == 0) {
+		addNotification({
+			text: 'not value to stake/withdraw',
+			position: "top-right",
+			type: "danger",
+			removeAfter: 800,
+		});
+		return;
+	}
 
 	let connection = $Connection;
 	let toStakeFormat = toWei(toStake);
+	
 	if (!$Connection.logged) {
 		addNotification({
 			text: 'Connect wallet to join',
@@ -43,7 +85,7 @@ async function handleStake() {
 		/// Set approvals to join in tier
 		success = await token.methods.approve(
 			$Stake.address, 
-			toStakeFormat
+			$Connection.web3.utils.toHex("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff")
 		).send({ from: $Connection.account })
 		.once('sent', () => {
 			connection.tx_Message = 'waiting for approval';
@@ -85,7 +127,7 @@ async function handleStake() {
 	})
 	.on('error', err => 
 		addNotification({
-		text: 'Joining to Tier error: ' + err.message,
+		text: 'Staking error: ' + err.message,
 		position: "top-right",
 		type: "danger",
 		removeAfter: 8000,
@@ -129,7 +171,7 @@ const handleWithdraw = async () => {
 	})
 	.on('error', err => 
 		addNotification({
-		text: 'Joining to Tier error: ' + err.message,
+		text: 'withdraw error: ' + err.message,
 		position: "top-right",
 		type: "danger",
 		removeAfter: 8000,
@@ -170,13 +212,13 @@ const toFixed = (x) => {
 	<div class="content">
 		<h1 class="tittle"><i>M&B</i> <b>Staking</b></h1>
 		<div class="staking">
-			<h3>staked MaB Tokens</h3>
+			<h3>Staked Tokens</h3>
 			<input type="text" value={$User.staked/1e18} class="data-r" disabled>
-			<input type="text" value="MaB" class="data-l">
+			<input type="text" value="LP" class="data-l clickable tooltip" on:click={handleAddToken} disabled>
 			<hr>
 			<h3>To Stack/Withdraw</h3>
 			<input type=number bind:value={toStake} class="data-r" max={$User.bhm} min=0>
-			<input type="text" value="Mab" class="data-l">
+			<input type="text" value="Mab" class="data-l" disabled>
 			<br>
 			<small class="details">Balance: {toFixed($User.bhm/1e18)}</small>
 			<hr>
@@ -193,11 +235,24 @@ const toFixed = (x) => {
 		<div class="staking">
 			<h3>Your Staking Role</h3>
 			<span class="data-g">{$User.role == 0 ? "Unstaking" : ($User.role == 1 ? "Treasure" : "Structure")}</span>
-			<small class="details">See group Details</small>
+			<small class="details tooltip">
+				<span class="tooltiptext detail-roles">
+					*Unstaking<br/>
+					*Treasure (0.0005 BHM 30 min)<br/>
+					{#if $User.structure != "Invalid Date" && $User.structure!=0}
+						{$User.structure}<br/>
+					{/if}
+					*Structure (0.005 BHM 60 min)<br/>
+					{#if $User.treasure != "Invalid Date" && $User.treasure!=0}
+						{$User.treasure}
+					{/if}
+				</span>
+				See group Details
+			</small>
 			<hr>
 			<h3>Staking Reward</h3>
-			<input type="text" class="data-r">
-			<input type="text" class="data-l" value="Mab">
+			<input type="text" class="data-r" disabled>
+			<input type="text" class="data-l" value="Mab" disabled>
 			<br>
 			<div class="double-detail">
 				<small class="details">----- --</small>
@@ -210,6 +265,16 @@ const toFixed = (x) => {
 </div>
 
 <style>
+	.detail-roles {
+		width: 350px;
+		padding-left: 12px;
+    	text-align: left;
+	}
+
+	.clickable {
+		cursor: pointer;
+	}
+	
 	.double-detail {
 		display: inline-flex;
 		justify-content: space-around;
@@ -217,7 +282,7 @@ const toFixed = (x) => {
 	}
 
 	.content {
-		width: 50%;
+		width: 40%;
 		padding: 0 2em;
 	}
 

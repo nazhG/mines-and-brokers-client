@@ -1,12 +1,12 @@
 import { writable } from "svelte/store";
 
 const Stake = writable({
-    address: "0xe82e2c3Ffc166FC80257c98B20BB87392Eb6116D",
+    address: "0x12eC09259A57A892F21169686ed4238A9F9Bf7A5",
     contract: null,
   }),
   Token = writable({
-    address: "0xd312f18554Ff14e14f40F7705aa3751d7336FC38",
-    simbol: "LP",
+    address: "0xA80a996007C89802A381A62c7a454166400975B4",
+    simbol: "BHM",
     contract: null,
   }),
   ETH_Token = writable({
@@ -19,7 +19,7 @@ const Stake = writable({
     contract: null,
   }),
   Bridge = writable({
-    address: "0xe61C78556Eb753DF4723dd2e5c7538ad97cfcFeE",
+    address: "0x44fDBC0AA0538F740eDF8244cc429503BEee58d1",
     contract: null,
   }),
   Connection = writable({
@@ -34,6 +34,8 @@ const Stake = writable({
     affiliation_date: 0,
     bhm: 0,
     staked: 0,
+    structure: 0,
+    treasure: 0,
     role: 0,
     burned: 0,
     bhf: 0,
