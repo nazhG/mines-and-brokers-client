@@ -18,6 +18,6 @@
         }
         :global(body.dark-mode) button {
             background-color: transparent;
-            color: white;
+            color: #080808;
         }
     </style>

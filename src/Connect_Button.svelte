@@ -123,18 +123,21 @@ const accountFilter = (_account) => {
 </script>
 
 <button
-	class="btn btn-connect tooltip { $Connection.logged ? ($Connection.chainId != 97 ? 'warnig' : 'success') : '' }"
+	class="btn btn-connect tooltip"
 	on:click={handleConnect}
 	disabled={$Connection.logged}>
   {#if $Connection.logged}
-    { accountFilter($Connection.account) }
+    <div>
+      { accountFilter($Connection.account) }
+      <div class="badge { $Connection.logged ? ($Connection.chainId != 97 ? 'warnig' : 'success') : '' }"></div>
+    </div>
     <span class="tooltiptext">
 			{#if $Connection.chainId != 97}
         Wrong chain
 			{:else}
         Connected
 			{/if}
-      </span>
+    </span>
     {#if $Connection.tx_Message}
       <br><i class="fas fa-spinner fa-pulse"></i>&nbsp;{ $Connection.tx_Message }
     {/if}
@@ -144,6 +147,13 @@ const accountFilter = (_account) => {
 </button>
 
 <style>
+
+  .badge {
+    border-radius: 50%;
+    width: 10px;
+    height: 10px;
+    display: inline-flex;
+  }
 
   .warnig {
     color: white;
@@ -161,6 +171,7 @@ const accountFilter = (_account) => {
   }
 
   button {
+    color: #333;
     margin-bottom: 0 !important;
     font-weight: bold;
   }
